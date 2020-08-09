@@ -9,20 +9,20 @@ $(document).ready(function() {
 	var gmove=0;
 	var gsize=0;
 	var gTmpArr={};
-	var historyName='asscreedhist';
+	var historyName='asscreedhist2';
 	
 	
 	//загрузка истории
 	var globhist=getCookie(historyName);
 	try {
-		globhist=[];
+		//globhist=[];
 		globhist = JSON.parse(globhist);
 		//Если история есть заполняем группу история всеми элементами.
 		//console.log(globhist);
 		//loadhist(); история загружается в другом месте
 	}
 	catch(e) {
-		//consle.log(e); // error in the above string (in this case, yes)!
+		//console.log(e); // error in the above string (in this case, yes)!
 		console.log('Данных истории в куках нет');
 		globhist=[];
 		
@@ -152,14 +152,26 @@ $(document).ready(function() {
 	
 	function loadhist(){
 		var tmplist=$('#tmplist');
+		var tmparr;
 		
 		var tmpcnt=globhist.length;
+		var groupnum;
 		for (var i=0;i<tmpcnt;i++){
 			var newid=globhist[i];
+			if (newid.indexOf('@g=')){
+			//история содержит группы, в старых версиях не содержит
+				tmparr=newid.split('@g=');
+				newid=tmparr[0];
+				groupnum=tmparr[1];
+			}else{
+				groupnum=null;
+			}
+			//globhist.push(dataid+'@g='+groupnum);
 			var newel=tmplist.html();
 			//у нас есть id - берем с маркеров на карте описания
 			newel = $($.parseHTML( jQuery.trim(newel.replace(/#text#/gi, $('#'+newid).attr('title')))));
 			newel.data('id',newid);
+			if (groupnum){newel.data('group',groupnum);}
 			newel.append($('<span class="icondel"></span>'));
 			$('#flylist .autohist').append(newel);
 		}
@@ -172,6 +184,7 @@ $(document).ready(function() {
 		newel = $.parseHTML( jQuery.trim(newel.replace(/#text#/gi, text+' ('+numpoint+')')));
 		newel=$(newel);
 		newel.data('id','mapoint'+numpoint);
+		newel.data('group',groupnum);
 		//тяжелый но нужный метод для быстрого поиска
 		//$(newel).attr('data-textid', 'mapoint'+numpoint);
 		
@@ -243,9 +256,19 @@ $(document).ready(function() {
 		}
 		else
 		{
+		//выжимка из истории
 			var tmpcnt=globhist.length;
+			var tmparr;
 			for (var i=0;i<tmpcnt;i++){
 				var newid=globhist[i];
+				if (newid.indexOf('@g=')){
+				//история содержит группы, в старых версиях не содержит
+					tmparr=newid.split('@g=');
+					newid=tmparr[0];
+					//groupnum=tmparr[1];
+				}/*else{
+					groupnum=null;
+				}*/
 				var elemmap=$('#'+newid);
 				//у нас есть id - берем с маркеров на карте описания
 				
@@ -608,6 +631,7 @@ $(document).ready(function() {
 			if (!par.parent().hasClass('autohist'))
 			{
 				var dataid=par.data('id');
+				var groupnum=par.data('group');
 				//Чтобы не было дублей
 				if (!globhist.includes(dataid)){
 					var newel=$($.parseHTML(jQuery.trim(par.get(0).outerHTML)));
@@ -618,7 +642,8 @@ $(document).ready(function() {
 					}
 					newel.append($('<span class="icondel"></span>'));
 					$('#flylist .autohist').append(newel);
-					globhist.push(dataid);
+					//запись в историю
+					globhist.push(dataid+'@g='+groupnum);
 					//update history
 					setCookie(historyName,JSON.stringify(globhist),{expires:60*60*24*30,path:'/'})
 				}
@@ -762,6 +787,7 @@ $(document).ready(function() {
 		par.remove();
 		//Проверка
 		if (globhist.includes(dataid)){
+			//удаление из истории
 			var tmpindex = globhist.indexOf(dataid);
 			if (tmpindex > -1) {
 				globhist.splice(tmpindex, 1);
