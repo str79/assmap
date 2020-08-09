@@ -1,2 +1,2 @@
 # assmap
-Assasin's creed interactive map
+Assasin's creed2 interactive map
